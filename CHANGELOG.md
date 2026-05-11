@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.0.2] - 2026-05-11
+
+### Fixed (사용자 제보: "상법 검색 시 보상 관련 법령만 반환")
+
+법제처 `lawSearch.do`는 법령명 **LIKE 검색 + 가나다순 정렬**로 동작한다. `query=상법`이면 totalCnt=56건 중 「상법」(상행위 법전)은 가나다순 **34위**에 위치하고, 1~33위는 "보상법/배상법/기상법/재해보상법" 시리즈가 점유한다. 여기에 MCP의 `display` 기본값이 20이라 사용자에게는 항상 보상 관련 법령만 노출되는 구조적 결함이 있었다. 「민법」「형법」「관세법」 등 두 글자 짧은 법령명 전부에 동일 패턴이 적용되어 LLM이 잘못된 법령을 인용하거나 웹검색으로 우회하던 사례 다수.
+
+- **정확매칭 우선 후처리** ([src/tools/search.ts](src/tools/search.ts)): `법령명한글`/`법령약칭명`이 사용자 입력(또는 약칭 canonical)과 정확히 일치하는 결과를 분리해서 `📍 정확매칭` 섹션으로 최상단 노출. 나머지는 `📂 부분매칭` 섹션으로 분리.
+- **`display` 기본값 20 → 50 상향**: 가나다순 정렬에서 짧은 법령명이 후순위로 밀려도 한 번에 회수되도록.
+- **`api-client.searchLaw`에 `display` 인자 전달**: 기존엔 search-normalizer 단에서 display가 무시되던 호출 경로 수정.
+- **단행법 alias entry 추가** ([src/lib/search-normalizer.ts](src/lib/search-normalizer.ts)): 「상법」「민법」「형법」「어음법」「수표법」 — 정식명이 자기 자신이라 alias 등록은 의미 약하나, `alternatives`로 관련 법령(시행령/시행법 등) 후보 제시 + `normalizeAliasKey` export로 정확매칭 비교 키 재사용.
+- **검증**: `상법` → 1위 「상법」(MST 284143), `민법` → 1위 「민법」(MST 284415), `형법` → 1위 「형법」(MST 284025), `관세법` → 1위 「관세법」(MST 280363). 약칭 fallback(화관법/중처법/주임법) 정상 동작 확인.
+- **`⚠️ 정확매칭 없음` 안내**: 정확매칭이 0건이면 LLM에게 부분 LIKE 결과임을 명시 → 환각 방지.
+
+### Files
+- 수정: [src/tools/search.ts](src/tools/search.ts) (정확매칭 분리, display 50, 안내문), [src/lib/search-normalizer.ts](src/lib/search-normalizer.ts) (단행법 5종 alias, normalizeAliasKey export)
+- 신규 파일: 없음
+
 ## [4.0.1] - 2026-05-08
 
 ### Added (issue #35: 국세청 직접 회신 해석례 검색 미지원)

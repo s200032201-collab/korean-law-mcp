@@ -35,6 +35,30 @@ const LAW_ALIAS_ENTRIES: LawAliasEntry[] = [
     canonical: "대한민국헌법",
     aliases: ["헌법", "헌 법"],
   },
+  // ── 4대 단행법 (정식명이 짧아 부분매칭 노이즈가 심한 케이스) ──
+  {
+    canonical: "상법",
+    aliases: ["상 법", "상사법"],
+    alternatives: ["상법 시행령", "상법시행법", "상법의 전자선하증권 규정의 시행에 관한 규정"],
+  },
+  {
+    canonical: "민법",
+    aliases: ["민 법"],
+    alternatives: ["민법 시행령", "민사소송법", "민사집행법"],
+  },
+  {
+    canonical: "형법",
+    aliases: ["형 법"],
+    alternatives: ["형사소송법", "형의 집행 및 수용자의 처우에 관한 법률"],
+  },
+  {
+    canonical: "어음법",
+    aliases: ["어 음법"],
+  },
+  {
+    canonical: "수표법",
+    aliases: ["수 표법"],
+  },
   {
     canonical: "관세법",
     aliases: ["관세벚", "관세요", "관세 볍", "관세 볍률"],
@@ -285,7 +309,7 @@ for (const entry of LAW_ALIAS_ENTRIES) {
   }
 }
 
-function normalizeAliasKey(value: string): string {
+export function normalizeAliasKey(value: string): string {
   return normalizeBasicTypos(value)
     .toLowerCase()
     .replace(/\s+/gu, "")
