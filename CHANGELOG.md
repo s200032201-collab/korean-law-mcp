@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.0.8] - 2026-05-29
+
+### Fixed — 법제처 빈/HTML 응답으로 인한 `missing root element` 간헐 실패
+
+법제처 OPEN API가 간헐적으로 **HTTP 200에 빈 본문 또는 HTML 점검 페이지**를 반환할 때, `search_law` 등 XML 파싱 경로가 `@xmldom`의 `missing root element`(빈 본문) / `Opening and ending tag mismatch`(HTML) 예외로 터지던 문제. `EXTERNAL_API_ERROR: missing root element`로 노출되며 "됐다 안 됐다" 증상으로 보고됨.
+
+원인 규명:
+- **IP 등록·OC 키 문제 아님.** IP 미등록 시 법제처는 *정상 형식의 XML*(`<Response>사용자 정보 검증 실패</Response>`)을 반환하고, 이 경우 도구는 `NOT_FOUND`를 냄 — `missing root element`는 **빈 응답/HTML(비-XML)** 일 때만 발생.
+- **코드 회귀 아님.** v4.0.6→v4.0.7 변경(`precedents.ts`/`external-https-proxy.ts`)은 `search_law` 경로와 무관. 외부(법제처) 응답 불안정이 배포 시점과 우연히 겹친 것.
+
+수정:
+- **`fetch-with-retry.ts`**: HTTP 200이어도 본문이 비었거나 HTML 페이지면 일시 장애로 간주해 재시도(exponential backoff). 정상 응답(XML `<`, JSON `{`/`[`)은 영향 없음. 모든 법제처 호출(법령·판례·조례 등)이 공통 혜택 — `detectBadBody()` 추가.
+- **`api-client.ts`**: `searchLaw`에 `checkEmptyResponse()`(빈 응답 감지) + `checkHtmlError()` 적용. 재시도 소진 후에도 빈/HTML이면 `missing root element` 대신 "법제처 API가 빈 응답을 반환했습니다. 일시적 장애일 수 있으니 잠시 후 다시 시도하세요" 안내.
+
+### 검증
+- mock 서버 단위 검증: 빈 응답·HTML 응답 재시도 동작, 간헐 장애(빈 2회→정상 XML) 재시도 복구 확인.
+- `npm run build` 통과.
+
 ## [4.0.7] - 2026-05-29
 
 ### Fixed — 국세청 판례 본문 fallback 안정화 (외부 PR #44)

@@ -30,6 +30,17 @@ const DEFAULT_RETRIES = 3
 const DEFAULT_RETRY_DELAY = 1000
 const DEFAULT_RETRY_ON = [429, 503, 504]
 
+/**
+ * 법제처 API가 200으로 빈 본문/HTML(점검·과부하 페이지)을 반환하는 간헐 장애 감지.
+ * 정상 응답은 XML(`<`) 또는 JSON(`{`/`[`)으로 시작하므로 빈 본문과 HTML 페이지만 걸러낸다.
+ */
+function detectBadBody(text: string): "empty" | "html" | null {
+  const t = text.trim()
+  if (!t) return "empty"
+  if (/^<!doctype html/i.test(t) || /^<html[\s>]/i.test(t)) return "html"
+  return null
+}
+
 // 법제처 OPEN API가 Node 기본 UA(undici)를 봇으로 분류해 거부하므로
 // 일반 브라우저 UA로 호출. LAW_USER_AGENT 환경변수로 override 가능.
 const DEFAULT_USER_AGENT =
@@ -71,6 +82,22 @@ export async function fetchWithRetry(
 
       // Success or non-retryable error
       if (response.ok || !retryOn.includes(response.status)) {
+        // 200인데 빈 본문/HTML(법제처 점검·과부하 페이지)이면 일시 장애로 보고 재시도.
+        // 이를 막지 않으면 XML 파서가 "missing root element"로 터진다.
+        if (response.ok && attempt < retries) {
+          let bodyText: string | null = null
+          try { bodyText = await response.clone().text() } catch { /* clone 실패 시 정상 처리 */ }
+          if (bodyText !== null) {
+            const bad = detectBadBody(bodyText)
+            if (bad) {
+              lastError = new Error(
+                `법제처 API 비정상 응답(${bad === "empty" ? "빈 본문" : "HTML 페이지"}) - ${maskSensitiveUrl(url)}`
+              )
+              await sleep(getRetryDelay(response, retryDelay, attempt))
+              continue
+            }
+          }
+        }
         return response
       }
 

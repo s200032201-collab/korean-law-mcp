@@ -49,6 +49,10 @@ graph LR
 
 → STEP 1 상황진단(주택임대차보호법 자동 식별) → STEP 2 권리/구제수단(판례) → STEP 3 신청기관/기한(행정규칙+해석) → STEP 4 필요서류/양식(별표) → STEP 5 함정/주의(시효·법률구조공단). 평소 말투 그대로 → 실행 가능한 단계로 변환.
 
+### + v4.0.8 — 법제처 빈/HTML 응답 자동 재시도
+
+법제처 OPEN API가 간헐적으로 200 상태에 **빈 본문이나 HTML 점검 페이지**를 반환하던 문제 대응. 이 경우 XML 파서가 `missing root element`로 터지며 "됐다 안 됐다" 증상이 발생했음. `fetchWithRetry`가 빈/HTML 응답을 일시 장애로 간주해 자동 재시도(exponential backoff)하고, 재시도 소진 후에도 빈 응답이면 `search_law`가 `missing root element` 대신 명확한 안내 메시지를 반환하도록 수정. (IP 등록·OC 키와 무관한 외부 응답 불안정 이슈)
+
 ### + v4.0.7 — 국세청 판례 본문 fallback
 
 법제처 JSON API에 본문이 비어 오는 판례를 국세청 `taxlaw.nts.go.kr`에서 HTML로 자동 보강. JSON 실패·파싱 실패·본문 누락 세 경우 모두 fallback으로 진입하며 안전하게 회수됨. 사내망/SSL inspection 환경용 `LAW_EXTERNAL_HTTPS_PROXY`(선택)·`LAW_EXTERNAL_TLS_REJECT_UNAUTHORIZED`(진단용) 지원 — 자세한 설정은 아래 "국세청 판례 서버 TLS/프록시 설정" 섹션 참조. (외부 PR #44)
