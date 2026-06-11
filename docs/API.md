@@ -1,8 +1,8 @@
 # Korean Law MCP - API Reference
 
-> **v4.3.0** | 19개 노출 도구 (내부 95개, 76개는 execute_tool로 접근)
+> **v4.4.0** | 9개 노출 도구 (내부 97개, 미노출 도구는 execute_tool 또는 직접 호출로 접근)
 
-도구 구조는 [README.md](../README.md#도구-구조-19개) 참조.
+도구 구조는 [README.md](../README.md#도구-구조-9개) 참조.
 상세 파라미터는 각 도구의 Zod 스키마(`src/tools/*.ts`) 참조.
 
 ---
@@ -63,6 +63,13 @@
 ---
 
 ## 도구 카테고리
+
+### 통합 진입점 (2개, 직노출 — v4.4.0)
+
+| 도구 | 설명 |
+|------|------|
+| `legal_research` | 다단계 리서치 — `task` 8종(full_research·law_system·action_basis·dispute_prep·amendment_track·ordinance_compare·procedure_detail·document_review)으로 아래 체인 도구 8개를 디스패치 |
+| `legal_analysis` | 정밀 분석/검증 — `mode` 4종(verify_citations·cite_check·applicable_law·impact_map)으로 아래 킬러 기능 4개를 디스패치 |
 
 ### 검색 (11개)
 
@@ -187,7 +194,7 @@
 | `search_appeal_review_decisions` | 소청심사 검색 |
 | `get_appeal_review_decision_text` | 소청심사 전문 |
 
-### 킬러 기능 (4개, 직노출)
+### 킬러 기능 (4개 — v4.4.0부터 `legal_analysis`의 mode로 노출, 직접 호출도 가능)
 
 | 도구 | 설명 |
 |------|------|
@@ -196,7 +203,7 @@
 | `cite_check` | 판례 생사 확인 — 사건번호로 후속 인용 역추적(본문검색) + 전합 변경·폐기 문구 감지, 별칭 추적 포함 (v4.3) |
 | `applicable_law` | 행위시법 판단 — 기준일 시행 버전 특정 + 시점 조문 + 현행 비교 + 부칙 적용례·경과조치 발췌 (v4.3) |
 
-### 체인 도구 (8개)
+### 체인 도구 (8개 — v4.4.0부터 `legal_research`의 task로 노출, 직접 호출도 가능)
 
 여러 도구를 자동 조합하여 복합 리서치를 한 번에 수행.
 
@@ -252,11 +259,17 @@
    → HWP 파일 다운로드 → 표 Markdown 변환
 ```
 
-### 체인 도구 (종합 리서치)
+### 통합 리서치 (legal_research)
 
 ```
-1. chain_full_research(query="음주운전 처벌")
-   → AI검색 → 법령조문 → 판례 → 해석례 자동 수행
+1. legal_research(query="음주운전 처벌")
+   → AI검색 → 법령조문 → 판례 → 해석례 자동 수행 (task 기본값 full_research)
+
+2. legal_research(query="관세법", task="law_system")
+   → 법률·시행령·시행규칙 3단 + 위임구조
+
+3. legal_analysis(mode="cite_check", caseNumber="2013다61381")
+   → 판례 생사 확인
 ```
 
 ---

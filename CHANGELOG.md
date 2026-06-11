@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.4.0] - 2026-06-11
+
+### Changed — 노출 도구 통폐합 19개 → 9개 (컨텍스트 52% 감축)
+
+MCP 클라이언트의 ListTools 컨텍스트 비용 ~15.1KB → ~7.2KB (실측, ≈6,000 → ≈2,900토큰).
+
+- **`legal_research` 신설**: `chain_*` 8개를 `task` 파라미터로 통합 (full_research·law_system·action_basis·dispute_prep·amendment_track·ordinance_compare·procedure_detail·document_review). scenario/domain/articles 등 기존 파라미터 전부 유지, task별 비호환 scenario는 무시하고 자동 감지에 위임
+- **`legal_analysis` 신설**: 킬러피처 4개(verify_citations·cite_check·applicable_law·impact_map)를 `mode` 파라미터로 통합. 세부 옵션(deepScan, includeMermaid 등)은 원본 기본값 적용
+- **하위호환 보장**: 원본 12개 도구는 `allTools`에 유지 — CallTool 직접 호출·`execute_tool` 경유 모두 기존대로 동작. 광고(ListTools)만 제외
+- **apiKey 스키마 노출 제거**: 정식 경로는 HTTP 헤더(session-state)이므로 광고 스키마에서 숨김. 인자로 넘기는 기존 클라이언트는 Zod parse가 계속 수용
+- `discover_tools` 설명의 하드코딩 도구 수(73개) 제거
+
+최종 노출 9개: legal_research, legal_analysis, search_law, get_law_text, get_annexes, search_decisions, get_decision_text, discover_tools, execute_tool
+
 ## [4.3.0] - 2026-06-11
 
 ### Added — cite_check: 판례 생사 확인 (한국형 Shepard's Citator)

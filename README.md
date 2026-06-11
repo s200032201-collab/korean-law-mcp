@@ -1,6 +1,6 @@
 # Korean Law MCP
 
-**법제처 42개 API를 19개 도구로.** 법령, 판례, 행정규칙, 자치법규, 조약, 해석례(국세청 포함) + **LLM 환각 방지 인용 검증** + **조문 영향 그래프** + **시점 비교 자동 diff** + **이럴 땐 이렇게 — 5단계 안내** + **판례 생사 확인(Citator)** + **행위시법 판단**을 AI 어시스턴트나 터미널에서 바로 사용.
+**법제처 42개 API를 9개 도구로.** 법령, 판례, 행정규칙, 자치법규, 조약, 해석례(국세청 포함) + **LLM 환각 방지 인용 검증** + **조문 영향 그래프** + **시점 비교 자동 diff** + **이럴 땐 이렇게 — 5단계 안내** + **판례 생사 확인(Citator)** + **행위시법 판단**을 AI 어시스턴트나 터미널에서 바로 사용.
 
 [![npm version](https://img.shields.io/npm/v/korean-law-mcp.svg)](https://www.npmjs.com/package/korean-law-mcp)
 [![MCP 1.27](https://img.shields.io/badge/MCP-1.27-blue)](https://modelcontextprotocol.io)
@@ -13,6 +13,14 @@
 ![Korean Law MCP 데모](./demo.gif)
 
 ---
+
+## v4.4.0 — 노출 도구 통폐합 19개 → 9개 (컨텍스트 52% 감축)
+
+MCP 클라이언트가 매 세션 읽는 도구 목록(ListTools)을 ~15.1KB → ~7.2KB로 줄였습니다.
+
+- `chain_*` 8개 → **`legal_research`** 하나로 (`task` 파라미터: full_research·law_system·action_basis·dispute_prep·amendment_track·ordinance_compare·procedure_detail·document_review)
+- 킬러피처 4개(`verify_citations`·`cite_check`·`applicable_law`·`impact_map`) → **`legal_analysis`** 하나로 (`mode` 파라미터)
+- **하위호환**: 기존 도구명 직접 호출·`execute_tool` 경유 모두 그대로 동작. 광고 목록에서만 빠짐
 
 ## v4.3 — 판례 생사 확인 + 행위시법 판단
 
@@ -357,7 +365,7 @@ lexdiff에서 "산안기준규칙" 질의가 법제처 aiSearch의 키워드 부
 **v3.0.2** — Unified Architecture + Setup Wizard
 
 법제처 41개 API를 89개 MCP 도구로 구조화했던 v2.
-v3는 같은 41개 API를 **14개 도구**로 재압축했습니다 (v3.2.2 이후 15개, v4.3 현재 19개).
+v3는 같은 41개 API를 **14개 도구**로 재압축했습니다 (v3.2.2 이후 15개, v4.3에서 19개, v4.4.0에서 통폐합으로 9개).
 
 | | 법제처 원본 | v2 | v3 |
 |---|:---:|:---:|:---:|
@@ -421,7 +429,7 @@ MCP 도구 설계에서 **도구 수 ≠ 기능 수**입니다.
 
 대한민국에는 **1,600개 이상의 현행 법률**, **10,000개 이상의 행정규칙**, 그리고 대법원·헌법재판소·조세심판원·관세청까지 이어지는 방대한 판례 체계가 있습니다. 이 모든 게 [법제처](https://www.law.go.kr)라는 하나의 사이트에 있지만, 개발자 경험은 최악입니다.
 
-이 프로젝트는 그 전체 법령 시스템을 **19개 도구**로 감싸서, AI 어시스턴트나 스크립트에서 바로 호출할 수 있게 만듭니다. 법제처를 수백 번 수동 검색하다 지친 공무원이 만들었습니다.
+이 프로젝트는 그 전체 법령 시스템을 **9개 도구**로 감싸서, AI 어시스턴트나 스크립트에서 바로 호출할 수 있게 만듭니다. 법제처를 수백 번 수동 검색하다 지친 공무원이 만들었습니다.
 
 ---
 
@@ -526,7 +534,7 @@ https://korean-law-mcp.fly.dev/mcp?oc=honggildong
 
 > **참고**: 커넥터 URL을 수정하려면 삭제 후 다시 추가해야 합니다.
 
-> v3부터 프로필 선택이 필요 없습니다. 19개 도구가 42개 API 전체를 커버합니다.
+> v3부터 프로필 선택이 필요 없습니다. 9개 도구가 42개 API 전체를 커버합니다.
 > 기존에 `?profile=lite&oc=...` 주소를 넣으셨다면 **그대로 두셔도 됩니다** — 동일하게 작동합니다.
 
 ---
@@ -748,31 +756,43 @@ reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /
 
 ---
 
-## 도구 구조 (19개)
+## 도구 구조 (9개)
 
-v4는 19개 도구만 노출합니다. 나머지 전문 도구는 `discover_tools` → `execute_tool`로 접근.
+v4.4.0은 9개 도구만 노출합니다 (컨텍스트 52% 감축). 기존 `chain_*` 8개는 `legal_research`의 `task`로, 킬러피처 4개는 `legal_analysis`의 `mode`로 통합. 나머지 전문 도구는 `discover_tools` → `execute_tool`로 접근하며, 기존 도구명 직접 호출도 하위호환으로 계속 동작합니다.
 
-| 구분 | 도구 | 설명 | 시나리오 확장 |
-|------|------|------|-------------|
-| **체인** (8) | `chain_full_research` | 종합 리서치 (AI검색→법령→판례→해석) | `customs`: 관세·통관 종합 |
-| | `chain_law_system` | 법체계 분석 (3단비교, 위임구조) | `delegation`: 위임입법 감시 / `impact`: 영향도 분석 |
-| | `chain_action_basis` | 처분 근거 확인 (허가·인가·처분) | `penalty`: 처분·벌칙 기준 종합 / `action_plan`: 이럴 땐 이렇게, 5단계 안내 |
-| | `chain_dispute_prep` | 쟁송 대비 (불복·소송·심판) | — |
-| | `chain_amendment_track` | 개정 추적 (신구대조, 연혁) | `timeline`: 시계열 타임라인 / `time_travel`: 두 시점 자동 diff |
-| | `chain_ordinance_compare` | 조례 비교 (상위법→전국 조례) | `compliance`: 상위법 적합성 검증 |
-| | `chain_procedure_detail` | 절차·비용·서식 안내 | `manual`: 공무원 처리 매뉴얼 |
-| | `chain_document_review` | 계약서·약관 리스크 분석 | — |
+| 구분 | 도구 | 설명 |
+|------|------|------|
+| **리서치** (1) | `legal_research` | 다단계 법령 리서치 — `task` 8종 선택 (아래 표) |
+| **정밀분석** (1) | `legal_analysis` | 검증·분석 — `mode` 4종 선택 (아래 표) |
 | **법령** (3) | `search_law` | 법령 검색 → lawId, MST 획득 |
 | | `get_law_text` | 조문 전문 조회 |
 | | `get_annexes` | 별표/서식 조회 (금액표·요율표·별지서식) |
 | **통합** (2) | `search_decisions` | **17개 도메인** 통합 검색 (판례·헌재·조세심판·공정위·노동위·관세·해석례·행심·개인정보위·권익위·소청심사·학칙·공사공단·공공기관·조약·영문법령) |
 | | `get_decision_text` | **17개 도메인** 전문 조회 |
-| **킬러** (4) | `verify_citations` | LLM 환각 방지 — 인용 조문 실존 여부 일괄 검증 (v3.5) |
-| | `impact_map` | 조문 영향 그래프 — 인용 판례·해석·자치법규 역방향 탐색 + mermaid (v4.0) |
-| | `cite_check` | 판례 생사 확인 — 후속 인용 역추적 + 변경·폐기 감지, 한국형 Citator (v4.3) |
-| | `applicable_law` | 행위시법 판단 — 시점 적용 버전 + 부칙 경과규정 발췌 (v4.3) |
 | **메타** (2) | `discover_tools` | 전문 도구 검색 (용어·별표·이력·비교 등) |
 | | `execute_tool` | 전문 도구 프록시 실행 |
+
+### `legal_research` task 8종 (구 chain_*)
+
+| task | 설명 | 시나리오 확장 |
+|------|------|-------------|
+| `full_research` (기본) | 종합 리서치 (AI검색→법령→판례→해석) | `customs`: 관세·통관 종합 / `action_plan`: 이럴 땐 이렇게, 5단계 안내 |
+| `law_system` | 법체계 분석 (3단비교, 위임구조) | `delegation`: 위임입법 감시 / `impact`: 영향도 분석 |
+| `action_basis` | 처분 근거 확인 (허가·인가·처분) | `penalty`: 처분·벌칙 기준 종합 |
+| `dispute_prep` | 쟁송 대비 (불복·소송·심판) | `domain`: tax/labor/privacy/competition |
+| `amendment_track` | 개정 추적 (신구대조, 연혁) | `timeline`: 시계열 타임라인 / `time_travel`: 두 시점 자동 diff |
+| `ordinance_compare` | 조례 비교 (상위법→전국 조례) | `compliance`: 상위법 적합성 검증 |
+| `procedure_detail` | 절차·비용·서식 안내 | `manual`: 공무원 처리 매뉴얼 |
+| `document_review` | 계약서·약관 리스크 분석 (`text` 필수) | — |
+
+### `legal_analysis` mode 4종 (구 킬러피처)
+
+| mode | 설명 | 필수 파라미터 |
+|------|------|-------------|
+| `verify_citations` | LLM 환각 방지 — 인용 조문 실존 여부 일괄 검증 (v3.5) | `text` |
+| `cite_check` | 판례 생사 확인 — 후속 인용 역추적 + 변경·폐기 감지, 한국형 Citator (v4.3) | `caseNumber` |
+| `applicable_law` | 행위시법 판단 — 시점 적용 버전 + 부칙 경과규정 발췌 (v4.3) | `lawName`, `date` |
+| `impact_map` | 조문 영향 그래프 — 인용 판례·해석·자치법규 역방향 탐색 + mermaid (v4.0) | `lawName`, `jo` |
 
 전체 도구 상세는 [docs/API.md](docs/API.md) 참조.
 
@@ -780,7 +800,7 @@ v4는 19개 도구만 노출합니다. 나머지 전문 도구는 `discover_tool
 
 ## 주요 특징
 
-- **42개 API → 19개 도구** — 법령, 판례, 행정규칙, 자치법규, 헌재결정, 조세심판, 관세해석, 국세청 해석례, 조약, 학칙/공단/공공기관 규정, 법령용어
+- **42개 API → 9개 도구** — 법령, 판례, 행정규칙, 자치법규, 헌재결정, 조세심판, 관세해석, 국세청 해석례, 조약, 학칙/공단/공공기관 규정, 법령용어
 - **MCP + CLI** — Claude Desktop에서도, 터미널에서도 같은 도구 사용
 - **법률 도메인 특화** — 약칭 자동 인식(`화관법` → `화학물질관리법`), 조문번호 변환(`제38조` ↔ `003800`), 3단 위임 구조 시각화
 - **별표/별지서식 본문 추출** — HWPX·HWP·PDF·XLSX·DOCX 자동 변환 ([kordoc](https://github.com/chrisryugj/kordoc) 엔진)

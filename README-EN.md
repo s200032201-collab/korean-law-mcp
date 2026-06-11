@@ -1,6 +1,6 @@
 # Korean Law MCP
 
-**42 APIs compressed into 19 tools.** Search, retrieve, and analyze Korean law — statutes, precedents, ordinances, treaties + **LLM hallucination guard for legal citations** + **precedent citator (cite_check)** + **point-in-time law resolution (applicable_law)**.
+**42 APIs compressed into 9 tools.** Search, retrieve, and analyze Korean law — statutes, precedents, ordinances, treaties + **LLM hallucination guard for legal citations** + **precedent citator (cite_check)** + **point-in-time law resolution (applicable_law)**.
 
 [![npm version](https://img.shields.io/npm/v/korean-law-mcp.svg)](https://www.npmjs.com/package/korean-law-mcp)
 [![MCP 1.27](https://img.shields.io/badge/MCP-1.27-blue)](https://modelcontextprotocol.io)
