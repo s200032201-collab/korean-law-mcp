@@ -58,6 +58,8 @@ import { getLinkedOrdinances, LinkedOrdinancesSchema, getLinkedOrdinanceArticles
 import { analyzeDocument, AnalyzeDocumentSchema } from "./tools/document-analysis.js"
 import { verifyCitations, VerifyCitationsSchema } from "./tools/verify-citations.js"
 import { impactMap, ImpactMapSchema } from "./tools/impact-map.js"
+import { citeCheck, CiteCheckSchema } from "./tools/cite-check.js"
+import { applicableLaw, ApplicableLawSchema } from "./tools/applicable-law.js"
 // Chain tool imports
 import {
   chainLawSystem, chainLawSystemSchema,
@@ -656,6 +658,22 @@ export const allTools: McpTool[] = [
     handler: impactMap
   },
 
+  // === 판례 인용 추적 (v4.3 killer feature) ===
+  {
+    name: "cite_check",
+    description: "[판례생사] 한국형 Shepard's Citator — 사건번호(예: 2013다61381)로 ① 그 판례를 인용한 후속 판례 역추적(본문검색) ② 전원합의체 후속 판결의 변경·폐기 문구 정밀 스캔 ③ 계속인용/변경가능성 판정. '이 판례 아직 유효한가' 확인용. 변경·폐기된 판례 인용 사고 방지.",
+    schema: CiteCheckSchema,
+    handler: citeCheck
+  },
+
+  // === 행위시법 판단 (v4.3 killer feature) ===
+  {
+    name: "applicable_law",
+    description: "[행위시법] '사건 시점(예: 2023.5.10)에 적용되는 법은?' — 기준일에 시행 중이던 법령 버전(MST) 특정 + 그 시점 조문 본문 + 현행과 비교 + 이후 개정 부칙의 적용례·경과조치 자동 발췌 + 행위시법/처분시법 법리 안내. lawName + date 필수, jo 선택. LLM이 현행법으로 오답하는 것 방지.",
+    schema: ApplicableLawSchema,
+    handler: applicableLaw
+  },
+
   // === 메타 도구 (lite 프로필용) ===
   {
     name: "discover_tools",
@@ -730,22 +748,24 @@ const V3_EXPOSED = new Set([
   "discover_tools", "execute_tool",
   "verify_citations",  // v3.5: LLM 환각 방지 인용 검증
   "impact_map",        // v4.0: 조문 영향 그래프 (역방향 탐색 + mermaid)
+  "cite_check",        // v4.3: 판례 생사 확인 (한국형 Shepard's Citator)
+  "applicable_law",    // v4.3: 행위시법 판단 (시점 적용 버전 + 부칙 경과규정)
 ])
 
 // 이름 기반 O(1) 조회용 Map
-const toolMap = new Map<string, McpTool>()
+// allTools는 정적 — 모듈 로드 시 1회만 구성 (HTTP 모드에서 요청마다 재구성 방지)
+const toolMap = new Map<string, McpTool>(allTools.map(tool => [tool.name, tool]))
+
+// 메타 도구가 전체 도구 목록 참조할 수 있도록 주입
+setAllToolsRef(allTools)
+
+// V3_EXPOSED만 노출 (나머지는 execute_tool 경유)
+const exposedTools = allTools.filter(t => V3_EXPOSED.has(t.name))
+
+/** 노출/전체 도구 수 — 헬스체크 등 표기용 파생값 (하드코딩 금지) */
+export const TOOL_COUNTS = { exposed: exposedTools.length, total: allTools.length }
 
 export function registerTools(server: Server, apiClient: LawApiClient) {
-  // Map 초기화
-  toolMap.clear()
-  for (const tool of allTools) toolMap.set(tool.name, tool)
-
-  // 메타 도구가 전체 도구 목록 참조할 수 있도록 주입
-  setAllToolsRef(allTools)
-
-  // V3_EXPOSED 16개만 노출 (나머지는 execute_tool 경유)
-  const exposedTools = allTools.filter(t => V3_EXPOSED.has(t.name))
-
   // ListTools 핸들러
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: exposedTools.map(tool => ({
