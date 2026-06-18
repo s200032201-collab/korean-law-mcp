@@ -24,6 +24,7 @@ interface AnnexItem {
   자치법규시행일자?: string
   공포일자?: string
   소관부처?: string
+  소관부처명?: string
   지자체기관명?: string
 }
 
@@ -60,7 +61,9 @@ export async function getAnnexes(
         const json = JSON.parse(jsonText)
         const adminResult = json?.admRulBylSearch
         const licResult = json?.licBylSearch
-        if (adminResult?.admbyl) return { list: toArray(adminResult.admbyl), type: "admin" }
+        // 법제처 행정규칙 별표 응답의 배열 키는 admrulbyl (admbyl 아님). 구버전 호환 위해 admbyl도 폴백.
+        if (adminResult?.admrulbyl ?? adminResult?.admbyl)
+          return { list: toArray(adminResult.admrulbyl ?? adminResult.admbyl), type: "admin" }
         if (licResult?.ordinbyl) return { list: toArray(licResult.ordinbyl), type: "ordinance" }
         if (licResult?.licbyl) return { list: toArray(licResult.licbyl), type: "law" }
         return { list: [], type: "law" }
@@ -286,7 +289,8 @@ function formatAnnexList(
       }
     } else if (lawType === "admin") {
       if (annex.관련행정규칙명) resultText += `   행정규칙: ${annex.관련행정규칙명}\n`
-      if (annex.소관부처) resultText += `   소관부처: ${annex.소관부처}\n`
+      const dept = annex.소관부처명 || annex.소관부처
+      if (dept) resultText += `   소관부처: ${dept}\n`
     } else {
       if (annex.관련법령명) resultText += `   관련법령: ${annex.관련법령명}\n`
     }
