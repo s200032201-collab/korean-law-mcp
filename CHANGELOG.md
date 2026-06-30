@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.4.3] - 2026-06-29
+
+### Fixed — zod v4 고정 (신규 설치 크래시 해결)
+
+- **`z.toJSONSchema is not a function` 크래시**: `dependencies`가 zod를 `^3.25.76 || ^4.0.0`으로 선언했으나 코드는 zod v4 전용 API인 `z.toJSONSchema()`를 호출. 새 npm 설치가 zod 3.25를 해석하면 `listTools` 첫 호출에서 크래시. zod를 `^4`로 고정해 해결
+
 ## [4.4.2] - 2026-06-18
 
 ### Fixed — 행정규칙 별표/서식 조회 복구 (#50, #49, #51)

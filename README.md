@@ -22,6 +22,12 @@
 
 ---
 
+## v4.4.1–4.4.3 — 안정성 패치
+
+- **v4.4.3**: `zod`를 `^4`로 고정 — 신규 설치가 zod 3.x를 해석해 `listTools` 첫 호출에서 `z.toJSONSchema is not a function`으로 크래시하던 문제 해결
+- **v4.4.2**: `get_annexes` 행정규칙 별표/서식 조회 복구 — 응답 키 `admrulbyl` 우선 파싱 + "...시행세칙" 자동 판별 + 동일 bylSeq 별표/서식 충돌 분리 (#50/#49/#51)
+- **v4.4.1**: 광고 스키마 `required` 버그 수정 — `.default()` 필드(`legal_research.task`·`search_law.display`)가 필수 입력으로 노출되던 문제(`io:"input"` 명시) + `legal_analysis` 비용 옵션 패스스루 + 비호환 scenario 경고 노트
+
 ## v4.4.0 — 노출 도구 통폐합 19개 → 9개 (컨텍스트 52% 감축)
 
 MCP 클라이언트가 매 세션 읽는 도구 목록(ListTools)을 ~15.1KB → ~7.2KB로 줄였습니다.
