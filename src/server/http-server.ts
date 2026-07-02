@@ -43,6 +43,15 @@ export async function startHTTPServer(createServer: () => Server, port: number) 
       ? parseInt(trustProxyRaw, 10)
       : trustProxyRaw // CIDR/IP 리스트 패스스루
   app.set("trust proxy", trustProxy)
+
+  // ACCESS_LOG=1 일 때만 요청 로그 — req.path만 기록 (쿼리스트링의 oc= API 키 유출 방지)
+  if (process.env.ACCESS_LOG === "1") {
+    app.use((req, _res, next) => {
+      console.error(`[access] ${req.method} ${req.path} ip=${req.ip} ua="${req.headers["user-agent"] ?? "-"}"`)
+      next()
+    })
+  }
+
   app.use(express.json({ limit: process.env.MCP_BODY_LIMIT || "100kb" }))
 
   // Rate Limiting (RATE_LIMIT_RPM 환경변수, 기본: 60 req/min per IP)
