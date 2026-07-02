@@ -22,6 +22,7 @@
 2. law-mcp 머신 교체 + `ACCESS_LOG=1` 환경변수 게이트 액세스 로그 추가 (`src/server/http-server.ts`, 쿼리스트링 제외로 oc= API 키 유출 방지) — 트래픽 출처 진단용
 3. stats 머신 autostop을 suspend → stop으로 전환 + fly.toml에도 반영·재배포 완료 ('suspend'는 proxy가 재우기를 실행 못 하는 증상 실측 — 'stop'인 school만 정상 사이클)
 4. stats에도 `ACCESS_LOG=1` 액세스 로그 이식·배포 (`src/server-http.ts`) — 이 로그로 실사용 트래픽 확인
+5. **school-mcp 당분간 서비스 중단** (`fly scale count 0`, 2026-07-02) — 앱·이름·주소는 유지, 복구는 `fly scale count 1 -a school-mcp`. 참고: 계정에 $5 미만 청구 면제가 있어 월 총액을 $5 아래로 낮추는 게 목표
    - stats 재배포 시 주의: 워킹트리에 pnpm 11 잔여물로 pnpm-lock.yaml이 변조돼 있으면 `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH` — `git checkout -- pnpm-lock.yaml`로 복원 후 배포
 
 ## 남은 대책 후보
